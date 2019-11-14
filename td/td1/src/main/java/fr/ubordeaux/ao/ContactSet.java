@@ -22,17 +22,10 @@ public class ContactSet {
         return contactSet.size();
     }
 
-    public Set<Contact> getContactSet(int from, int to) {
+    public Set<Contact> getContactSet() {
         Set<Contact> result = new HashSet<Contact>();
-        int i = 0;
         for (Contact contact : contactSet) {
-            if (i >= from) {
-                result.add(contact);
-            }
-            if (i >= to) {
-                return result;
-            }
-            i++;
+            result.add(contact);
         }
         return result;
     }

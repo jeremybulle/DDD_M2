@@ -1,8 +1,11 @@
 package fr.ubordeaux.ao;
 
+import java.util.Set;
+
 public class Main {
-    private static  final int MAX = 3000;
+    private static  final int MAX = 100;
     public static void main(String[] args) {
+        SearchEngine searchEngine = new SearchEngine();
         ContactSet contactSet = new ContactSet();
         Town talence = new Town("Talence", 33405);
 
@@ -14,11 +17,13 @@ public class Main {
         }
         System.out.println(MAX+" contacts created !");
 
-        try {
-            Thread.sleep(200000);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        Set<Contact> resultSearch = searchEngine.findContact("Do", contactSet.getContactSet());
+
+        // try {
+        //     Thread.sleep(200000);
+        // } catch (Exception ex) {
+        //     ex.printStackTrace();
+        // }
         
         
     }
