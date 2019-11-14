@@ -3,9 +3,9 @@ package fr.ubordeaux.ao;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SearchEngine{
+public abstract class SearchEngine{
     
-    public Set<Contact> findContact(String identifiant, Set<Contact> setContact){
+    public static Set<Contact> findContact(String identifiant, Set<Contact> setContact){
         Set<Contact> result = new HashSet<Contact>();
         for(Contact contact : setContact){
             if(identifiant == contact.getFirstName()){

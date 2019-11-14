@@ -5,7 +5,7 @@ import java.util.Set;
 public class Main {
     private static  final int MAX = 100;
     public static void main(String[] args) {
-        SearchEngine searchEngine = new SearchEngine();
+        //SearchEngine searchEngine = new SearchEngine();
         ContactSet contactSet = new ContactSet();
         Town talence = new Town("Talence", 33405);
 
@@ -17,7 +17,7 @@ public class Main {
         }
         System.out.println(MAX+" contacts created !");
 
-        Set<Contact> resultSearch = searchEngine.findContact("Do", contactSet.getContactSet());
+        Set<Contact> resultSearch = SearchEngine.findContact("Do", contactSet.getContactSet());
 
         // try {
         //     Thread.sleep(200000);
