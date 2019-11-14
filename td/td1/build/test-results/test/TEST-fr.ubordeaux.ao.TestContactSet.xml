@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="fr.ubordeaux.ao.TestContactSet" tests="1" skipped="0" failures="0" errors="0" timestamp="2019-11-14T17:44:09" hostname="jerem-All-Series" time="0.004">
+  <properties/>
+  <testcase name="testContactSet" classname="fr.ubordeaux.ao.TestContactSet" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
