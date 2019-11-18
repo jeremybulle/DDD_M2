@@ -109,7 +109,8 @@ Qu'est-ce qu'une classe?
 * **traitement :** ```visibilité TypeDeRetour nom(Type param1, Type param2,...);```
 => conforme : l'objet est responsable des traitements définis par la classe.
 
-**Ducktyping :** ex : typescript, "si tu fais coin coin => alors t'es un canard", le ducktyping regarde que du coté objet
+**Ducktyping :** ex : typescripE.Evans 2003 = Blue Book
+Vaughn = Red Bookt, "si tu fais coin coin => alors t'es un canard", le ducktyping regarde que du coté objet
 
 **JAVA :** Qui est ton créateur ? => JAVA regarde coté classe.
 
@@ -571,7 +572,8 @@ Katta potter http://codingdojo.org/kata/Potter/
 
 # Domain Driven Design
 
-E.Evans
+E.Evans 2003 = Blue Book
+Vaughn = Red Book
 
 **Principe fondamentale :**
 => le code fait autorité (la vérité se trouve dans le code)
@@ -711,6 +713,7 @@ En DDD, c'est le code qui a la main => on peut le faire de manière sync ou asyn
 
 **En DDD => Nouveau contexte = Nouvelle app (pas de rétutilisation des classes)**.
 
+
 **Concept du DDD = Tactical Pattern**
 * **Value Objet :** immutable, **equals by value**, typage plus fort que celui de java (ex: entier positif). => pas de problème d'encapsulation
 * **Entity :** possède un état(state) donc peut évolué = mutable , **equals by ID**
@@ -723,7 +726,161 @@ En DDD, c'est le code qui a la main => on peut le faire de manière sync ou asyn
 2. Qu'est-ce qui bouge? => Entity
 3. Est-ce qu'il y a des ensembles? =>Aggregate
 
-
-
 exemple: de l'échiquier
 
+|A | B | C | D | E | F | G | H |
+--|---|---|---|---|---|---|---|--
+1 |   |   |   |   |   |   |   |
+2 |   |   |   |   |   |   |   |
+3 |   |   |   |   |   |   |   |
+4 |   |   |   |   |   |   |   |
+5 |   |   |   |   |   |   |   |
+6 |   |   |   |   |   |   |   |
+7 |   |   |   |   |   |   |   |
+8 |   |   |   |   |   |   |   |
+
+On va avoir des aggregate et la technique move qui va permettre de bouger la pièce.
+
+| Aggregate | Entity | ValueObject     |
+|:----------|:-------|:----------------|
+| - Game    |-case (Piece p, Location loc =ID)        | - Location      |
+| -Position |        | - Joueur        |
+|           |        | - Color         |
+|           |        | - LegalPosition |
+|           |        | - Move          |
+
+```Java
+public class Location{
+  private char column;
+  private int line;
+  public Location(char col, int lin){
+    if(col !€ ["A-H"]){
+      throw new IllegalParameters();
+    }
+    else{
+      this.column=col;
+    }
+    if(lin >0 && lin <= 8){
+      this.column=col;
+      
+    }
+    else{
+      throw new IllegalParameters();
+    }
+  }
+}
+
+public class Game{
+  public Game(){}
+  public void move(Location Pion, Location step){}
+}
+```
+
+Piece :
+- Sa couleur Ne bouge pas
+- Sa position Bouge
+- Son importance Bouge et ne bouge pas
+- Vivant ou morte Bouge
+- Son mouvement Bouge et ne bouge pas : ça dépend la vision des choses.
+
+Position va bouger c'est sûr, est-ce que une pièce est définie pas sa position ?
+
+```Java
+public class Piece{
+  private Location loc;
+
+  public void move(Location newLoc){
+    loc = new loc;
+  }
+}
+```
+**=> Application à la Java Bean!!! A éviter**
+**=>Une méthode va dans la classe qui peut OBTENIR TOUTES LES INFOS! Ici par exemple dans la classe Game => move(Location from, Location to)**
+
+
+Applaying UML : Pages intéressantes sur les patterns GASP : méthode va dans la classe qui possède ou peut obtenir toutes les informations pour exécuter la méthode.
+
+Le mouvement : si je suis ça est-ce que j'ai le droit de faire ça. ON doit mettre le move abstract, et le développer suivant le type de la pièce. Piece avec  Knight, Queen, Bishop, etc...
+
+On divise la position en 2, on split en LegalMove et move.
+
+```Java
+
+public abstract class Piece{
+  public abstract boolean isLegalMove(Location from, Location to);
+}
+
+public class King extends Piece{
+  public boolean isLegalMove(Location from, Location to){
+    if (Math.abs(from.getline()-to.getline())>1){
+      return false;
+    }
+    return true;
+  }
+}
+
+// hidden entity en dessous dans la map:
+
+public class Game{
+  Map<Location,piece> positionPiece;
+}
+
+//Il vaut mieux créer une classe case
+
+public class Case{
+  Piece p; //change, représente l'état de l'entity
+  Location loc; // l'emplacement de la case ne change pas
+  // et deux case ne peuvent pas avoir la même loc => ID unique
+}
+
+//La classe game devient donc:
+
+public class Game{
+  List<Case> caseList;
+  public void move(Location from, Location to){
+    Case case= getCaseFromLocation(from);
+    Piece pfrom= case.getPiece();
+    boolean islegal=p.isLegalMove(from,to);
+    Case[] intermediaryCase= => fonction stateless;
+    //fct statless = getIntermedaryLoc(Loc from, Loc to);
+  }
+}
+
+public class Case{
+  Piece p;
+  Location l;
+
+}
+
+public List<Location> getIntermediaryLocation(Location from, Location to){
+
+}
+
+public List<Location> getAccessibleCase(Piece p,Location at){
+
+}
+```
+
+**Réification :** donner le caractère d'une chose à.
+
+Je récupère la case de from, prend la pièce, regarde qi le coup que je veux faire est légal et ensuite on regarde si on prend des pièces sur le chemin.
+
+Obtenir les cases intermédiaires : pas besoin d'état. Des fonctions qui n'ont pas du tout besoin d'état, ils ont juste besoin des trucs en paramètre en entrée et ces paramètres sont des ValueObject. getIntermediaryLocation et getAccessibleCase sont stateless. Intérêt des fonctions stateless : décompostition du code, elles n'ont pas besoin du changement du game, ce sont des services, réintroduction des lambda = fonction qui n'a besin de rien, qui se suffit en elle-même, dans le DDD ce sont des services. On les mets dans des nouvelles classes, on fait une classe par service.
+
+
+**TACTIQUES EN PRATIQUE :**  
+
+**1. Penser au Value object
+2. Voir l'aggregate avec les méthode haut niveau qui prennent en parmetre des Value object PAS d'entity, Mais on peut utiliser des entity à l'intérieur
+3. On trouve les entity dont on a besoin**
+
+**Stateless :** qui n'a pas d'état dans les paramètre, on appelle ca un **service** en poo (ex: focntion lambda). Il est conseiller de faire : **1 service = 1 classe**
+
+
+
+
+- Value Object (Services)
+- Aggregate méthode métier paramètres VO
+- Structuration aggregate => entity
+
+#### Factory
