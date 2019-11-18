@@ -67,7 +67,7 @@ Un objet ne peut pas faire tout et n'importe quoi, **i.e.** plein de traitements
 
 **Analyse d'objet :** Sens critique -> est-ce que mon objet est bon?
 
-**CF SCHEMA DER**
+**CF SCHEMA 1**
 
 ## Cycle de vie d'un objet :
 
@@ -96,7 +96,7 @@ Le JAVA est un **langage orienté objet**,le dev décrit des classes d'objet(jam
 * **Relationde typage :** est-ce que l'on voit que l'objet 
 a été créé avec une classe.
 
-voir schéma :  
+voir schéma 2:  
 
 Qu'est-ce qu'une classe?
 => un moule (new) = relation statique/figée
@@ -116,7 +116,7 @@ Vaughn = Red Bookt, "si tu fais coin coin => alors t'es un canard", le ducktypin
 
 **Conformité = = TYPAGE :**
 
-schéma :
+schéma 3:
 
 Double controle du typage pour les langages compilés.
 On a une phase de compilation code-> code compilé -> run.
@@ -146,7 +146,7 @@ C'est une relation entre deux classes qui a un impact sur les objets instances d
 
 **ATTENTION** ne **JAMAIS** écrire : "mon objet hérite de..." **!!!** **L'héritage est une relatioentre classes et non entre objet!**
 
-voir schéma :
+voir schéma 4:
 
 A **extends** B
 **A** est classe **fille**
@@ -194,7 +194,7 @@ Le **contrat des classe** (type) ne porte **jamais sur le code**. C'est uniqueme
 
 **Surcharge :** changer le type / ajouter des contraintes de typages
 
-schéma :
+schéma 5:
 
 
 cast = dire au compilateur, tkt
@@ -883,4 +883,381 @@ Obtenir les cases intermédiaires : pas besoin d'état. Des fonctions qui n'ont 
 - Aggregate méthode métier paramètres VO
 - Structuration aggregate => entity
 
-#### Factory
+## Factory
+
+```java
+public class Game{
+  Game(){
+    //  On génère la liste de toutes les cases, 
+    // y mettre les pièces etc etc = créations de 200/250 objets. 
+    // Quand le code de construction est grand alors on le déplace
+    //dans une factory 
+    // c'est une classe qui va construire les new.
+  }
+}
+
+```
+
+Quand le new est compliqué et qu'il nécessite trop de lignes, on sort dans une classe dite factory, classe qui va contenir que le new, cette classe va être le lieu où on va soigner le code de construction. On fait ça sur les aggregates.
+
+Autre exploitation des Factory est pour limiter le nombre d'objets VO égaux dans la VM.
+
+# Architecture Hexagonale ( La couche Infra)
+
+La couche domain, on va coder:
+  * le typage qui découles des Value Object 
+  * les règles métier = entity et aggregate. 
+
+Dans notre application il doit avoir un **package domain** : quand on ouvre un projet en DDD on a un répertoire domain où on va trouver toutes les **classes qui vont préciser le métier**. 
+Pas d'IHM pas de graphique, pas de ligne de commande, pas de sauvegarde, que du métier. Le package **domain ne dépend de rien, aucune dépendance de classes**. Tout doit être défini à l'intérieur, **aucune dépendance = on peut tout le temps compiler les classes qui y sont**, ça doit compiler tout le temps.Le package domain ne doit pas dépendre du framework. C'est mieux si ça compile avec des versions de java pas trop récentes.
+
+## Repository
+
+Comment faire pour **sauvegarder** ? 
+Sauver des concepts de métier qui ne dépendent pas d'une base de donnée. Avant / ou sans approche DDD : Schéma de notre donnée (SQL etc ...) on utilise un framework pour générer des classes qui font le pont vers notre VM. On crée notre classes à nous et on fait hériter. Game.sql -> Game.java GameHibernate -> Game extends GameHibernate, on a alors la méthode save dans Game, et qui est coder dans GameHibernate = ce code avec l'appel sql est soit dans une classe générée soit on le met dans Game. Le code de sauvegarde où le mettre ? Quel schéma ? Quelle signature de sauvegarde ?
+
+On reprend game et on veut **sauvegarder une partie en cours c'est le repository**. Il faut **mettre le code de save dans une classe GameSaver et le chargement avec**. Comme il faut sauver, il faut penser aux **méthodes qui permettent de sauver et loader les aggregate**. Il faut faire un **findGameById = un load**, on peut faire un findGame par le numbre de coup par lequel la partie a été gagnée. **Update = met à jour une sauvegarde**.
+
+Sans repository : Si on prend une aproche sans réfléchir on peut manquer de méthode dont on a besoin.
+
+**Repository = concept DDD = définit les signatures = ce n'est pas encore le code** en java c'est une interface, dans quelle couche ? C'est une interface ou classe abstraite, il va définir la signatures des méthodes, il est **dans domain** car on a pas encore le code de sauvegarde :
+
+```java
+
+public interface GameRepository{
+  public void save(Game g);
+  public Game load(int gameId);
+  public Game findBy();
+  public void Update();
+}
+```
+
+(l'implémentation sera dans la couche infrastructure, ex: GameRepositoryJson qui implémentera les méthodes de GameRepository et utilisara le format Json pour save et load).
+
+### Signature
+
+La on reste dans la conception, on cherche d'abord la signature.
+
+```java
+
+public class Game {
+  GameRepository rep;
+  public void move(Location from, Location to){
+    rep.update(this);
+  }
+}
+
+```
+
+Ici on reprend le contrôle en tant que développeur on choisit quand s'effectue la sauvegarde avec rep.update(this)
+
+### Schéma ?
+
+Maintenant quel schéma ? Quel format ? SQL ? CSV ? JSON ? etc ...
+
+table Game :
+- id
+
+table Case :
+- Game
+- Location
+- Piece
+
+table Location :
+- Column
+- Line
+- id
+
+table Piece:
+- id
+
+Ici si on change le code alors il faut changer la base de donnée, la vérté est dans le code. La définition du schéma dans la couche infra.
+
+### Où mettre le code ?
+
+On le met dans infra.
+
+```java
+// Dans la couche domain
+package domain;
+
+public interface GameRepository{
+  public void save(Game g);
+  public Game load(int gameId);
+}
+
+// Dans la couche infra
+package infra;
+
+public class GAme SQLRepository implements Game Repository{
+  public void save(Game game);
+}
+```
+GameRepository compile sans GameSQLRepository mais GameSQLRepository ne compile pas sans GameRepository.
+
+### L'éxécution du programme
+
+Qui / où / comment  appelle le repository ? Notre décision (dans les aggregate), des les services à l'extérieur.
+- Dans l'aggregate : On doit définir la loi de démeter on le fait via l'interface. On peut initialiser le game en lui donnant le repository ou on peut faire un setter de repository et on lui donne le GameRepository
+
+
+```java
+public class Game{
+  GameRepository rep
+  public void setRepository(GameRepository rep ){
+    this.rep=rep;
+  }
+  public void move(){
+    // ...
+    rep.update(this);
+  }
+}
+
+// main
+
+GameRepository rep = new GameSQLRepository();
+Game g = new Game();
+g.setRepository(rep);
+
+```
+
+On construit un repository. Le main est technique on le met en dehors, dans aucune des couches.
+
+
+# Synthèse DDD (Domain + Infrastructure)
+
+exemple de l'agenda: ajouter un rdv etc...
+
+|Aggregate|Entity|Value Object|Factory|Repository|Service| 
+|--|--|--|--|--|--|
+|Agenda|RDV|Date| | | |
+| | |sujet| | | |
+| | |lieu| | | |
+
+## Value Object, Entity, Aggregate
+
+```java
+public class Date{
+  private int numMois, int numJour;
+  
+  public Date(int mois, int jour){
+    this.numMois = mois;
+    this.numJour = jour;
+  }
+
+  public int hashcode(){}
+  public boolean equals(){}
+
+}
+```
+
+**ATTENTION :** L'aggregate(ici Agenda) ne doit jamais donner accès à ses entity! 
+cf schémas 6
+
+```Java
+public class Agenda{
+  private int Id;
+  private Set<Rdv> setRdv;
+  private int genIdRdv = 0;//nb d'Id de Rdv créé
+
+  public int ajouterUnRdv(Date debu, Date fin, Sujet sujet, Lieu lieu){
+    // faire une création d'id pour l'entity Rdv
+    Rdv rdv = new Rdv(int idRdvgénéré, Date début, Date fin, Lieu lieu);
+    return idRdvgénéré;
+  }
+  public void modifierSujetRdv(Sujet,int IdRdv){}
+}
+
+public class Rdv{
+  private int Id;
+  private Date debut,fin;
+
+  public void changerDebut(Date nouveauDebut){};
+  public boolean equals(){ utiliser l id };
+  public int hashcode(){utiliser l id};
+}
+```
+
+## Service 
+
+Idéalement c'est une méthode métier (donc elle fait partie du domain) **sans état**, elle ne stock rien et on ne peut pas la ranger dans les Agg, Entity ou VO.
+
+ex: 
+
+```java
+public Date getListCrenauLibre(Set<Agenda>, Date debut, Date fin, int duree)
+```
+**Ici on a le droit de donner des Aggregate car ils protègent leurs entity via l'encapsulation**
+
+on voit bien que cette méthode peut être rangée nulle part car elle a besoin de plusieurs agenda.
+
+=> public class AgendaService{
+  rien ici
+  pas de propriété => pas d'état => **stateless**
+
+    public Date getListCrenauLibre(Set<Agenda>, Date debut, Date fin, int duree){}
+}
+
+## Repository
+
+Sert à sauvegarder et à charger.
+Il est lié au concept de factory.
+Et le Repository est plutôt fait par les Aggregate.
+
+```java
+package domain;
+
+public interface AgendaRepository{
+  public void save(Agenda agenda);
+  public Agenda findAgendaById(int id);
+}
+```
+```java
+package infra;
+
+public class AgendaFile implements AgendaRepository{
+  public void save(Agenda agenda){
+    List<String>rdvDTO = agenda.getRdvDTO();
+    List<Rdv> listRdv = agenda.getRdv(); // seulement si pas ref direct! use cpy
+  }
+  public Agenda findAgendaById(int id);
+}
+
+public class Agenda{
+  public RDV ou String... getRdvDTo()
+}
+```
+schéma 7 dézoom Ui, Appli, domain, infra... 
+
+# CQRS (la couche application)
+
+voir schéma 8
+
+**couche application :** C'est toute la logique (Quand est-ce qu'on save? update? etc...). La couche application **contient le code qui permet la manipulation efficace des concepts métiers**.
+
+ex: à cahque fois que je fais un move() -> je save()
+=> moveAutoSave() (dans la couche appli) = servie de la couche application.
+
+**Attention :** Si le code traite d'autorité/autorisation => il va dans la couche domain!
+
+Si le code facilite(efficacité : tps de traiment et/pu rapidité de réponse(**Async**)) => C'est dans le **couche application**.
+
+**Command Query Responsability Segregation**(séparation des responsabilité entre les requêtes et les commandes)
+
+Le CQRS est une proposition pour traiter l'Asynchronisme en utilisant le pattern command.
+
+**=> Donc ici, on ne veut pas d'objet qui soit responsable à la fois des requêtes et des commandes**
+
+**=> on a donc au minimum deux objets qui sont responsables et séparés, c'est à dire qu'il ne communique pas entre eux**
+
+**Query =** read only
+**Command =** write
+
+cf voir schéma 9
+
+## Command
+
+On part ici d'un code "faux" => synchrone et on va les transformé en code asynchrone.
+
+```Java
+package application;
+
+public class ServiceApplication{
+  GameRepository gr;
+  
+  public void moveAutoSave(Location from, Location to, int gameId){
+    game g = gr.getGameById(gameId);//<- Query, read only sur la bdd
+    g.move(from,to);
+    gr.save(g);//<- Command, write sur la bdd
+  }
+}
+```
+
+Voir schéma 10 : le patter command(GOF)
+
+Penser à Mcdo => on fait une command, on nous donne un num
+
+**on peut considéré la commande comme environ une constante / un Value object**
+
+```Java
+public class SaveGameCommand{
+  private gameToSave;
+
+  public SaveGameCommand(Game g){ // g via DTO ou cpy!!
+    this.gameToSave = g;
+  }
+
+  public void execute(GameRepository gr){
+    gr.save(GameToSave);
+  }
+}
+
+public class ServiceAplication{ [A]
+  GameRepository gr;
+  CommandQueue queue;
+
+  public void move(Location from, Location to, int gameId){
+    Game g = gr.getGamebyId(gameId);
+    g.move(from,to);
+    SaveGameCommand cmd = new SaveGameCommand(g);
+    queue.add(command);
+  }
+}
+```
+
+**Queue / Dispatcheur**
+```Java
+public class CommandQueue{
+  private Set<SaveGameCommand> commandSet;
+
+  public synchronized void add(SaveGameCommand gc){
+    commandset.add(gc);
+  }
+
+  public synchronized SaveGameCommand pop(){
+    return commandSet.getLast();
+  }
+}
+
+public class Worker extends Thread{
+  private CommandQueue queue;
+
+  public void run(){
+    while(true){
+      queue.pop().exec()
+    }
+  }
+}
+```
+
+voir schéma 11
+
+## Les Query
+
+ex: getGameByID 
+=> on va faire une seule classe qui gère les requêtes et qui va servir à peu près de mémoire cache.
+
+```Java
+public class GetGameServiceApp{
+  private Game currentGame;
+
+  public Game getGameById(int idGame){
+    if(idGame != currentGame.id){
+      currentGame = gr.getGameById(idGame); // ou est l acces au gr?
+    }
+    return currentGame;
+  }
+
+  public class ServiceApplication{
+    // La tout le monde avait trop faim...
+  }
+}
+```
+
+voir schéma 12
+
+**eventualy consistency :** ultimement, si on multiplie les caches, même si on se synchronise pas au bout d'un moment ce sera quand même synchronisé.
+
+# Couche Application / UI 
+
+
