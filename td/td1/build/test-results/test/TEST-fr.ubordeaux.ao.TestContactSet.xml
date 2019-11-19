@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="fr.ubordeaux.ao.TestContactSet" tests="1" skipped="0" failures="0" errors="0" timestamp="2019-11-14T19:25:00" hostname="jerem-All-Series" time="0.004">
+<testsuite name="fr.ubordeaux.ao.TestContactSet" tests="1" skipped="0" failures="0" errors="0" timestamp="2019-11-19T16:20:47" hostname="jerem-Aspire-A515-51G" time="0.009">
   <properties/>
-  <testcase name="testContactSet" classname="fr.ubordeaux.ao.TestContactSet" time="0.004"/>
+  <testcase name="testContactSet" classname="fr.ubordeaux.ao.TestContactSet" time="0.009"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -7,21 +7,22 @@ import java.io.IOException;
 
 public class TownFactory {
     private BufferedReader br;
-    private final String file = "./villes_france.csv";
+    private final String file = "/media/jerem/CLE_JEREM/uppa_tempo/M2/POO/DDD_M2/td/td1/villes_france.csv";
 
     public TownFactory() {
         try {
 			br = new BufferedReader(new FileReader(file));
 		} catch (FileNotFoundException e) {
 			System.out.println("le fichier n'est pas accessible !");
-		}
+        }
     }
     public Town getNextTown() {
         String line;
 		try {
             line = br.readLine();
-            if (line == null) return null;
-
+            if (line == null){
+                return null;
+            }
             String[] cells = line.split(",");
             return new Town(cells[4], Integer.parseInt(cells[8].substring(1, cells[10].length()-1) ));
 		} catch (IOException e) {
